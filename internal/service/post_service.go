@@ -32,6 +32,8 @@ func NewPostService(postRepo repository.PostRepository, userRepo repository.User
 		likeChan: make(chan likeRequest, 100),
 	}
 
+	go ps.processLikes()
+
 	return ps
 }
 
@@ -68,6 +70,46 @@ func (s *PostService) CreatePost(req dto.CreatePostRequest, authorID primitive.O
 	go s.updatePostStats(post.ID)
 
 	return post, nil
+}
+
+func (s *PostService) GetFeed(limit int) ([]*models.Post, error) {
+	posts, err := s.postRepo.FindAll(limit, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var wg sync.WaitGroup
+	for _, post := range posts {
+		wg.Add(1)
+		go func(p *models.Post) {
+			defer wg.Done()
+			s.statsMu.RLock()
+			if count, exists := s.stats[p.ID]; exists {
+				p.LikeCount += count
+			}
+			s.statsMu.RUnlock()
+		}(post)
+	}
+	wg.Wait()
+
+	return posts, nil
+}
+
+func (s *PostService) LikePost(postID, userID primitive.ObjectID) error {
+	s.likeChan <- likeRequest{postID: postID, userID: userID}
+	return nil
+}
+
+func (s *PostService) processLikes() {
+	for req := range s.likeChan {
+		go func(r likeRequest) {
+			if err := s.postRepo.IncrementLikeCount(r.postID); err == nil {
+				s.statsMu.Lock()
+				s.stats[r.postID]++
+				s.statsMu.Unlock()
+			}
+		}(req)
+	}
 }
 
 func (s *PostService) updatePostStats(postID primitive.ObjectID) {
