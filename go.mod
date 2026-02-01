@@ -1,8 +1,12 @@
-module aitu_fanpage
+module github.com/Yeras1kAITU/aitu_fanpage
 
 go 1.25
 
-require go.mongodb.org/mongo-driver v1.17.7
+require (
+	github.com/go-chi/chi/v5 v5.2.4
+	github.com/google/uuid v1.6.0
+	go.mongodb.org/mongo-driver v1.17.7
+)
 
 require (
 	github.com/golang/snappy v1.0.0 // indirect
