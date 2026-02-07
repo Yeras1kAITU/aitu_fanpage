@@ -63,19 +63,19 @@ type FileService struct {
 
 func NewFileService(cfg config.UploadConfig) *FileService {
 	uploadDir := cfg.UploadDir
-	if uploadDir == "./uploads" {
-		uploadDir = "/data/uploads"
-	}
-
 	tempDir := cfg.TempDir
-	if tempDir == "./temp" {
-		tempDir = "/data/temp"
-	}
 
 	os.MkdirAll(uploadDir, 0755)
 	os.MkdirAll(tempDir, 0755)
 
-	// Create subdirectories
+	if uploadDir == "./uploads" {
+		uploadDir = "/data/uploads"
+	}
+
+	if tempDir == "./temp" {
+		tempDir = "/data/temp"
+	}
+
 	for _, mediaType := range []string{"images", "videos", "documents", "temp"} {
 		os.MkdirAll(filepath.Join(uploadDir, mediaType), 0755)
 	}

@@ -16,7 +16,7 @@ func (a *App) setupRouter(authMid *middleware.AuthMiddleware) {
 
 	allowedOrigins := []string{"*"}
 	if a.cfg.Server.Env == "production" {
-		allowedOrigins = []string{"https://your-frontend-domain.railway.app"}
+		allowedOrigins = []string{"https://aitufanpage-production.up.railway.app/"}
 	}
 
 	r.Use(cors.Handler(cors.Options{
