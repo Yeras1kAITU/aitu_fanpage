@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AITU Fanpage - Home</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <i class="fas fa-university"></i>
+            <span>AITU Fanpage</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+            <a href="search.html" class="nav-link"><i class="fas fa-search"></i> Search</a>
+            <div class="nav-dropdown">
+                <button class="nav-dropbtn">Categories <i class="fas fa-caret-down"></i></button>
+                <div class="nav-dropdown-content">
+                    <a href="#" data-category="meme">Memes</a>
+                    <a href="#" data-category="event">Events</a>
+                    <a href="#" data-category="news">News</a>
+                    <a href="#" data-category="question">Questions</a>
+                    <a href="#" data-category="academic">Academic</a>
+                    <a href="#" data-category="social">Social</a>
+                    <a href="#" data-category="sports">Sports</a>
+                </div>
+            </div>
+            <div id="auth-links"></div>
+            <div id="admin-link" style="display: none;">
+                <a href="admin.html" class="nav-link admin"><i class="fas fa-shield-alt"></i> Admin</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="hero-content">
+        <h1>Welcome to AITU Fanpage</h1>
+        <p>Connect, share, and engage with the AITU community</p>
+        <div class="hero-buttons">
+            <a href="register.html" class="btn btn-primary">Join Now</a>
+            <a href="login.html" class="btn btn-secondary">Login</a>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <div class="main-layout">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-fire"></i> Trending Categories</h3>
+                <div class="category-stats" id="category-stats">
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <h3><i class="fas fa-thumbtack"></i> Pinned Posts</h3>
+                <div id="pinned-posts">
+                </div>
+            </div>
+        </aside>
+
+        <section class="feed">
+            <div class="feed-header">
+                <h2><i class="fas fa-newspaper"></i> Latest Posts</h2>
+                <button id="create-post-btn" class="btn btn-primary" style="display: none;">
+                    <i class="fas fa-plus"></i> Create Post
+                </button>
+            </div>
+
+            <div class="post-filters">
+                <button class="filter-btn active" data-filter="all">All Posts</button>
+                <button class="filter-btn" data-filter="featured">Featured</button>
+                <button class="filter-btn" data-filter="popular">Popular</button>
+            </div>
+
+            <div class="posts-container" id="posts-container">
+            </div>
+
+            <div class="load-more">
+                <button id="load-more-btn" class="btn btn-outline">Load More Posts</button>
+            </div>
+        </section>
+
+        <aside class="sidebar right-sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-user-circle"></i> User Profile</h3>
+                <div id="user-profile-sidebar">
+                    <p>Please login to see your profile</p>
+                    <a href="login.html" class="btn btn-small">Login</a>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <h3><i class="fas fa-chart-line"></i> Statistics</h3>
+                <div class="stats" id="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Posts</span>
+                        <span class="stat-value" id="total-posts">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Users</span>
+                        <span class="stat-value" id="total-users">0</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>AITU Fanpage</h4>
+            <p>Official community platform for Astana IT University students and alumni.</p>
+        </div>
+        <div class="footer-section">
+            <h4>Quick Links</h4>
+            <a href="index.html">Home</a>
+            <a href="search.html">Search</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin Panel</a>
+        </div>
+        <div class="footer-section">
+            <h4>Contact</h4>
+            <p>Email: community@aitu.edu</p>
+            <p>Phone: +7 (7172) 123-456</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2024 AITU Fanpage. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/posts.js"></script>
+<script>
+    let currentPage = 1;
+    const postsPerPage = 10;
+    let currentFilter = 'all';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await checkAuthStatus();
+        await loadPosts();
+        await loadCategoryStats();
+        await loadPinnedPosts();
+        await loadStats();
+        setupEventListeners();
+    });
+
+    function setupEventListeners() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                currentPage = 1;
+                loadPosts();
+            });
+        });
+
+        document.querySelectorAll('[data-category]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const category = this.dataset.category;
+                window.location.href = `search.html?category=${category}`;
+            });
+        });
+
+        document.getElementById('create-post-btn')?.addEventListener('click', () => {
+            window.location.href = 'post-create.html';
+        });
+
+        document.getElementById('load-more-btn')?.addEventListener('click', () => {
+            currentPage++;
+            loadPosts(true);
+        });
+    }
+
+    async function loadPosts(append = false) {
+        try {
+            const token = localStorage.getItem('token');
+            const headers = {};
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            let url = `/api/posts?limit=${postsPerPage}&offset=${(currentPage - 1) * postsPerPage}`;
+            if (currentFilter === 'featured') url = `/api/posts/featured?limit=${postsPerPage}`;
+            if (currentFilter === 'popular') url = `/api/posts/popular?limit=${postsPerPage}`;
+
+            const response = await fetch(url, { headers });
+
+            if (!response.ok) {
+                throw new Error(`Failed to load posts: ${response.status}`);
+            }
+
+            const posts = await response.json();
+
+            if (!posts) {
+                renderPosts([], append);
+                return;
+            }
+
+            renderPosts(posts, append);
+
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            showNotification('Failed to load posts. Some features may not work.', 'warning');
+            renderPosts([], append);
+        }
+    }
+
+    function renderPosts(posts, append) {
+        const container = document.getElementById('posts-container');
+
+        if (!append) {
+            container.innerHTML = '';
+        }
+
+        const postsArray = Array.isArray(posts) ? posts : [];
+
+        if (postsArray.length === 0 && !append) {
+            container.innerHTML = `
+                <div class="no-posts">
+                    <i class="fas fa-newspaper fa-3x" style="color: var(--gray-color); margin-bottom: 20px;"></i>
+                    <h3>No posts yet</h3>
+                    <p>Be the first to share something with the community!</p>
+                    ${authManager.isAuthenticated() ?
+                `<a href="post-create.html" class="btn btn-primary mt-2">Create First Post</a>` :
+                `<a href="register.html" class="btn btn-primary mt-2">Join Now to Post</a>`
+            }
+                </div>
+            `;
+            document.getElementById('load-more-btn').style.display = 'none';
+            return;
+        } else if (postsArray.length === 0 && append) {
+            document.getElementById('load-more-btn').style.display = 'none';
+            return;
+        }
+
+        postsArray.forEach(post => {
+            container.appendChild(createPostElement(post));
+        });
+
+        if (postsArray.length < postsPerPage) {
+            document.getElementById('load-more-btn').style.display = 'none';
+        } else {
+            document.getElementById('load-more-btn').style.display = 'block';
+        }
+    }
+
+    function createPostElement(post) {
+        const postEl = document.createElement('div');
+        postEl.className = 'post-card';
+
+        const authorName = post.author_name || 'Unknown User';
+        const title = post.title || 'Untitled Post';
+        const description = post.description || '';
+        const content = post.content || '';
+        const category = post.category || '';
+        const likeCount = post.like_count || 0;
+        const commentCount = post.comment_count || 0;
+        const viewCount = post.view_count || 0;
+        const isPinned = post.is_pinned || false;
+        const isFeatured = post.is_featured || false;
+        const createdAt = post.created_at || new Date().toISOString();
+
+        postEl.innerHTML = `
+            <div class="post-header">
+                <div class="post-author">
+                    <img src="${post.author_profile_image || 'assets/default-avatar.svg'}"
+                         alt="${authorName}" class="author-avatar">
+                    <div class="author-info">
+                        <h4>${authorName}</h4>
+                        <span class="post-time">${formatTime(createdAt)}</span>
+                    </div>
+                </div>
+                <div class="post-badges">
+                    ${isPinned ? '<span class="badge pinned"><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
+                    ${isFeatured ? '<span class="badge featured"><i class="fas fa-star"></i> Featured</span>' : ''}
+                    ${category ? `<span class="badge category">${category}</span>` : ''}
+                </div>
+            </div>
+            <div class="post-content">
+                <h3 class="post-title">${title}</h3>
+                ${description ? `<p class="post-description">${description}</p>` : ''}
+                ${content ? `<div class="post-body">${content}</div>` : ''}
+            </div>
+            ${post.media && post.media.length > 0 ? createMediaPreview(post.media) : ''}
+            <div class="post-footer">
+                <div class="post-stats">
+                    <span class="stat"><i class="fas fa-heart"></i> ${likeCount}</span>
+                    <span class="stat"><i class="fas fa-comment"></i> ${commentCount}</span>
+                    <span class="stat"><i class="fas fa-eye"></i> ${viewCount}</span>
+                </div>
+                <div class="post-actions">
+                    <button class="btn-icon like-btn" data-post-id="${post.id}">
+                        <i class="fas fa-heart"></i> Like
+                    </button>
+                    <a href="post-detail.html?id=${post.id}" class="btn-icon">
+                        <i class="fas fa-comment"></i> Comment
+                    </a>
+                    <button class="btn-icon share-btn" data-post-id="${post.id}">
+                        <i class="fas fa-share"></i> Share
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const likeBtn = postEl.querySelector('.like-btn');
+        likeBtn.addEventListener('click', () => handleLike(post.id));
+
+        const shareBtn = postEl.querySelector('.share-btn');
+        shareBtn.addEventListener('click', () => {
+            const url = `${window.location.origin}/post-detail.html?id=${post.id}`;
+            navigator.clipboard.writeText(url)
+                .then(() => showNotification('Link copied to clipboard!', 'success'))
+                .catch(() => showNotification('Failed to copy link', 'error'));
+        });
+
+        return postEl;
+    }
+
+    function createMediaPreview(media) {
+        if (!media || media.length === 0) return '';
+
+        const mediaArray = Array.isArray(media) ? media : [];
+
+        if (mediaArray.length === 1) {
+            return `
+                <div class="post-media">
+                    <img src="${mediaArray[0].url || ''}" alt="Post media" class="media-preview single">
+                </div>
+            `;
+        }
+
+        const firstTwo = mediaArray.slice(0, 2);
+        return `
+            <div class="post-media grid">
+                ${firstTwo.map((item, index) => `
+                    <div class="media-item">
+                        <img src="${item.url || ''}" alt="Post media ${index + 1}">
+                        ${index === 1 && mediaArray.length > 2 ?
+            `<div class="media-overlay">+${mediaArray.length - 2}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async function loadCategoryStats() {
+        try {
+            const response = await fetch('/api/posts/categories/stats');
+            const container = document.getElementById('category-stats');
+
+            if (!response.ok) {
+                container.innerHTML = '<p>No category data available</p>';
+                return;
+            }
+
+            const stats = await response.json();
+
+            if (!stats || !stats.categories || Object.keys(stats.categories).length === 0) {
+                container.innerHTML = '<p>No posts yet</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(stats.categories)
+                .slice(0, 5)
+                .map(([category, count]) => `
+                    <div class="category-item">
+                        <span class="category-name">${category || 'Uncategorized'}</span>
+                        <span class="category-count">${count || 0}</span>
+                    </div>
+                `).join('');
+
+        } catch (error) {
+            console.warn('Error loading category stats:', error);
+            const container = document.getElementById('category-stats');
+            container.innerHTML = '<p>Failed to load categories</p>';
+        }
+    }
+
+    async function loadPinnedPosts() {
+        try {
+            const response = await fetch('/api/posts/pinned?limit=3');
+            const container = document.getElementById('pinned-posts');
+
+            if (!response.ok) {
+                container.innerHTML = '<p>No pinned posts</p>';
+                return;
+            }
+
+            const posts = await response.json();
+
+            if (!posts || !Array.isArray(posts) || posts.length === 0) {
+                container.innerHTML = '<p>No pinned posts</p>';
+                return;
+            }
+
+            container.innerHTML = posts.map(post => `
+                <div class="pinned-post">
+                    <h4>${post.title || 'Untitled'}</h4>
+                    <p class="pinned-author">by ${post.author_name || 'Unknown'}</p>
+                    <a href="post-detail.html?id=${post.id}" class="btn-link">Read more</a>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.warn('Error loading pinned posts:', error);
+            const container = document.getElementById('pinned-posts');
+            container.innerHTML = '<p>Failed to load pinned posts</p>';
+        }
+    }
+
+    async function loadStats() {
+        try {
+            // Total posts - public endpoint
+            const postsRes = await fetch('/api/posts?limit=1');
+            const totalPostsEl = document.getElementById('total-posts');
+            const totalUsersEl = document.getElementById('total-users');
+
+            if (postsRes.ok) {
+                const posts = await postsRes.json();
+                if (posts && Array.isArray(posts)) {
+                    totalPostsEl.textContent = posts.length;
+                } else {
+                    totalPostsEl.textContent = '0';
+                }
+            } else {
+                totalPostsEl.textContent = '0';
+            }
+
+            // Total users - only for admin users
+            const user = authManager.getUser();
+            if (user && user.role === 'admin') {
+                try {
+                    const usersRes = await fetchWithAuth('/api/admin/users?limit=1');
+                    document.getElementById('create-post-btn').style.display = '';
+                    if (usersRes.ok) {
+                        const users = await usersRes.json();
+                        totalUsersEl.textContent = users && Array.isArray(users) ? users.length : '0';
+                    } else {
+                        totalUsersEl.textContent = 'N/A';
+                    }
+                } catch (error) {
+                    totalUsersEl.textContent = 'N/A';
+                }
+            } else {
+                totalUsersEl.textContent = 'N/A';
+            }
+
+        } catch (error) {
+            console.warn('Error loading stats:', error);
+            document.getElementById('total-posts').textContent = '0';
+            document.getElementById('total-users').textContent = 'N/A';
+        }
+    }
+
+    async function handleLike(postId) {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showNotification('Please login to like posts', 'warning');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                showNotification('Post liked!', 'success');
+                const likeBtn = document.querySelector(`[data-post-id="${postId}"]`);
+                if (likeBtn) {
+                    const likeCount = likeBtn.closest('.post-footer').querySelector('.fa-heart').parentElement;
+                    const currentCount = parseInt(likeCount.textContent) || 0;
+                    likeCount.textContent = currentCount + 1;
+                }
+            } else {
+                showNotification('Failed to like post', 'error');
+            }
+        } catch (error) {
+            console.error('Error liking post:', error);
+            showNotification('Error liking post', 'error');
+        }
+    }
+
+    function formatTime(dateString) {
+        if (!dateString) return 'Just now';
+
+        try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+
+            return date.toLocaleDateString();
+        } catch (error) {
+            return 'Recently';
+        }
+    }
+</script>
+</body>
+</html>
