@@ -2,7 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "go build -o bin/server cmd/server/main.go"
+    "buildCommand": "go build -o server cmd/server/main.go"
   },
   "deploy": {
     "numReplicas": 1,

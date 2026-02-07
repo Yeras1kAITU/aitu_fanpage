@@ -1,6 +1,6 @@
 module github.com/Yeras1kAITU/aitu_fanpage
 
-go 1.25
+go 1.21
 
 require (
 	github.com/disintegration/imaging v1.6.2
