@@ -16,38 +16,52 @@ import (
 func main() {
 	cfg := config.Load()
 
+	if cfg.Server.Port == "" {
+		cfg.Server.Port = "8080"
+	}
+
+	log.Printf("Server starting on port %s", cfg.Server.Port)
+	log.Printf("Environment: %s", cfg.Server.Env)
+	log.Printf("Database: %s", cfg.Database.Name)
+
 	application, err := app.New(cfg)
 	if err != nil {
 		log.Fatalf("Failed to create app: %v", err)
 	}
 
 	server := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
+		Addr:         "0.0.0.0:" + cfg.Server.Port,
 		Handler:      application.Router(),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  30 * time.Second,
 	}
 
+	serverErrors := make(chan error, 1)
+
+	// Start the server in a goroutine
 	go func() {
-		log.Printf("Server starting on port %s", cfg.Server.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server failed: %v", err)
-		}
+		log.Printf("Server listening on %s", server.Addr)
+		serverErrors <- server.ListenAndServe()
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	log.Println("Shutting down server...")
+	select {
+	case err := <-serverErrors:
+		log.Fatalf("Server error: %v", err)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	case sig := <-shutdown:
+		log.Printf("Received signal: %v. Starting graceful shutdown...", sig)
 
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			log.Fatalf("Graceful shutdown failed: %v", err)
+		}
+
+		log.Println("Server stopped gracefully")
 	}
-
-	log.Println("Server stopped")
 }

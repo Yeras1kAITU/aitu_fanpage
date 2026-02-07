@@ -1,0 +1,8 @@
+[phases.setup]
+cmds = ["go mod download"]
+
+[phases.install]
+cmds = ["go build -o server cmd/server/main.go"]
+
+[start]
+cmd = "./server"

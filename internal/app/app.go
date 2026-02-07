@@ -37,18 +37,35 @@ func New(cfg *config.Config) (*App, error) {
 
 	var postRepo repository.PostRepository = mongorepo.NewPostRepository(db)
 	var userRepo repository.UserRepository = mongorepo.NewUserRepository(db)
+	var commentRepo repository.CommentRepository = mongorepo.NewCommentRepository(db)
 
-	postService := service.NewPostService(postRepo, userRepo)
+	authService := service.NewAuthService(userRepo, cfg)
+	postService := service.NewPostService(postRepo, userRepo, commentRepo)
+	commentService := service.NewCommentService(commentRepo, userRepo)
+	fileService := service.NewFileService(cfg.Upload)
+	userService := service.NewUserService(userRepo)
 
-	postHandler := handlers.NewPostHandler(postService)
+	authHandler := handlers.NewAuthHandler(authService)
+	postHandler := handlers.NewPostHandler(postService, fileService)
+	commentHandler := handlers.NewCommentHandler(commentService)
+	userHandler := handlers.NewUserHandler(userService)
+	adminHandler := handlers.NewAdminHandler(postService, userService, commentService)
+	mediaHandler := handlers.NewMediaHandler(fileService, postService)
 
 	app := &App{
-		cfg:      cfg,
-		db:       db,
-		handlers: &handlers.HandlerContainer{Post: postHandler},
+		cfg: cfg,
+		db:  db,
+		handlers: &handlers.HandlerContainer{
+			Auth:    authHandler,
+			Post:    postHandler,
+			Comment: commentHandler,
+			User:    userHandler,
+			Admin:   adminHandler,
+			Media:   mediaHandler,
+		},
 	}
 
-	app.setupRouter()
+	app.setupRouter(authService.GetTokenAuth())
 
 	return app, nil
 }

@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Post - AITU Fanpage</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .post-create-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .post-form {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--box-shadow);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+        }
+
+        .form-control.error {
+            border-color: var(--danger-color);
+        }
+
+        .form-text {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: var(--gray-color);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .category-option {
+            padding: 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .category-option:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(74, 111, 165, 0.05);
+        }
+
+        .category-option.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(74, 111, 165, 0.1);
+            font-weight: bold;
+        }
+
+        .category-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            min-height: 50px;
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            padding: 5px;
+            font-size: 1rem;
+            flex-grow: 1;
+            min-width: 100px;
+        }
+
+        .tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--light-gray);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(74, 111, 165, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+        }
+
+        .file-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 15px;
+        }
+
+        .file-preview img,
+        .file-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-info {
+            flex-grow: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            font-size: 0.9rem;
+            color: var(--gray-color);
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .media-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .media-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .media-item img,
+        .media-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-gray);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .validation-error {
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .post-create-container {
+                padding: 0 15px;
+            }
+
+            .post-form {
+                padding: 20px;
+            }
+
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <i class="fas fa-university"></i>
+            <span>AITU Fanpage</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <div id="auth-links"></div>
+        </div>
+    </div>
+</nav>
+
+<main class="post-create-container">
+    <h1 class="text-center mb-4"><i class="fas fa-plus-circle"></i> Create New Post</h1>
+
+    <div id="auth-required" style="display: none; text-align: center; padding: 40px;">
+        <i class="fas fa-lock fa-3x" style="color: var(--warning-color); margin-bottom: 20px;"></i>
+        <h3>Authentication Required</h3>
+        <p>You need to be logged in to create posts.</p>
+        <a href="login.html" class="btn btn-primary mt-2">Login</a>
+        <a href="register.html" class="btn btn-secondary mt-2">Register</a>
+    </div>
+
+    <form id="post-create-form" class="post-form" style="display: none;">
+        <div class="form-section">
+            <h3><i class="fas fa-heading"></i> Title</h3>
+            <div class="form-group">
+                <input type="text" id="post-title" class="form-control"
+                       placeholder="Enter a catchy title for your post"
+                       maxlength="200" required>
+                <div class="validation-error" id="title-error"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3><i class="fas fa-align-left"></i> Description</h3>
+            <div class="form-group">
+                <textarea id="post-description" class="form-control"
+                          placeholder="Write a brief description of your post"
+                          maxlength="500" rows="3"></textarea>
+                <div class="form-text">Optional. Maximum 500 characters.</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3><i class="fas fa-file-alt"></i> Content</h3>
+            <div class="form-group">
+                <textarea id="post-content" class="form-control"
+                          placeholder="Write your post content here..."
+                          rows="8" required></textarea>
+                <div class="validation-error" id="content-error"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3><i class="fas fa-folder"></i> Category</h3>
+            <div class="form-group">
+                <div class="category-grid" id="category-grid">
+                    <div class="category-option" data-category="meme">
+                        <div class="category-icon"><i class="fas fa-laugh"></i></div>
+                        <div>Meme</div>
+                    </div>
+                    <div class="category-option" data-category="event">
+                        <div class="category-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div>Event</div>
+                    </div>
+                    <div class="category-option" data-category="news">
+                        <div class="category-icon"><i class="fas fa-newspaper"></i></div>
+                        <div>News</div>
+                    </div>
+                    <div class="category-option" data-category="question">
+                        <div class="category-icon"><i class="fas fa-question-circle"></i></div>
+                        <div>Question</div>
+                    </div>
+                    <div class="category-option" data-category="lost_found">
+                        <div class="category-icon"><i class="fas fa-search"></i></div>
+                        <div>Lost & Found</div>
+                    </div>
+                    <div class="category-option" data-category="academic">
+                        <div class="category-icon"><i class="fas fa-graduation-cap"></i></div>
+                        <div>Academic</div>
+                    </div>
+                    <div class="category-option" data-category="social">
+                        <div class="category-icon"><i class="fas fa-users"></i></div>
+                        <div>Social</div>
+                    </div>
+                    <div class="category-option" data-category="sports">
+                        <div class="category-icon"><i class="fas fa-football-ball"></i></div>
+                        <div>Sports</div>
+                    </div>
+                </div>
+                <div class="validation-error" id="category-error"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3><i class="fas fa-tags"></i> Tags</h3>
+            <div class="form-group">
+                <div class="tags-container" id="tags-container">
+                    <input type="text" id="tag-input" class="tag-input"
+                           placeholder="Type a tag and press Enter">
+                </div>
+                <div class="form-text">Press Enter to add tags. Maximum 10 tags.</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3><i class="fas fa-images"></i> Media</h3>
+            <div class="form-group">
+                <div class="file-upload-area" id="file-upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h4>Drag & Drop Files Here</h4>
+                    <p>or click to browse</p>
+                    <p class="form-text">Supported: Images (JPG, PNG, GIF), Videos (MP4, MOV), PDF</p>
+                    <p class="form-text">Max file size: 10MB, Max files: 10</p>
+                    <input type="file" id="file-input" class="file-input" multiple accept=".jpg,.jpeg,.png,.gif,.mp4,.mov,.pdf">
+                </div>
+
+                <div id="file-list"></div>
+
+                <div id="media-preview" class="media-preview"></div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancel-btn">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+                <i class="fas fa-paper-plane"></i> Create Post
+            </button>
+        </div>
+    </form>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <h3>Creating Post...</h3>
+        <p>Please wait while we upload your content.</p>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>AITU Fanpage</h4>
+            <p>Official community platform for Astana IT University students and alumni.</p>
+        </div>
+        <div class="footer-section">
+            <h4>Quick Links</h4>
+            <a href="index.html">Home</a>
+            <a href="post-create.html">Create Post</a>
+            <a href="search.html">Search</a>
+        </div>
+        <div class="footer-section">
+            <h4>Contact</h4>
+            <p>Email: community@aitu.edu</p>
+            <p>Phone: +7 (7172) 123-456</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2024 AITU Fanpage. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/media.js"></script>
+<script>
+    class PostManager {
+        constructor() {
+            this.selectedFiles = [];
+            this.maxFiles = 10;
+            this.maxFileSize = 10 * 1024 * 1024;
+            this.allowedTypes = ['.jpg', '.jpeg', '.png', '.gif', '.mp4', '.mov', '.pdf'];
+        }
+
+        async createPost(postData, files) {
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            // Simple JSON without files
+            if (!files || files.length === 0) {
+                console.log('Creating post without files:', postData);
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(error || 'Failed to create post');
+                }
+
+                return await response.json();
+            }
+
+            // If files exist
+            console.log('Creating post with files:', postData, files.length);
+            const formData = new FormData();
+            formData.append('post', JSON.stringify(postData));
+
+            files.forEach(file => {
+                formData.append('files', file);
+            });
+
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(error || 'Failed to create post with files');
+            }
+
+            return await response.json();
+        }
+
+        validateFile(file) {
+            if (file.size > this.maxFileSize) {
+                throw new Error(`${file.name} is too large (max 10MB)`);
+            }
+
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!this.allowedTypes.includes(ext)) {
+                throw new Error(`${file.name} is not a supported file type`);
+            }
+
+            return true;
+        }
+
+        getFilePreview(file) {
+            const reader = new FileReader();
+
+            return new Promise((resolve) => {
+                reader.onload = function(e) {
+                    const preview = {
+                        url: e.target.result,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type
+                    };
+                    resolve(preview);
+                };
+
+                if (file.type.startsWith('image/')) {
+                    reader.readAsDataURL(file);
+                } else if (file.type.startsWith('video/')) {
+                    reader.readAsDataURL(file);
+                } else {
+                    resolve({
+                        url: null,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type
+                    });
+                }
+            });
+        }
+    }
+
+    const postManager = new PostManager();
+    let selectedCategory = '';
+    const tags = [];
+    let selectedFiles = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await checkAuthStatus();
+
+        if (!authManager.isAuthenticated()) {
+            document.getElementById('auth-required').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('post-create-form').style.display = 'block';
+
+        initializeEventListeners();
+    });
+
+    function initializeEventListeners() {
+        document.querySelectorAll('.category-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.category-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                selectedCategory = option.dataset.category;
+                document.getElementById('category-error').textContent = '';
+            });
+        });
+
+        const tagInput = document.getElementById('tag-input');
+        const tagsContainer = document.getElementById('tags-container');
+
+        tagInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const tag = tagInput.value.trim();
+
+                if (tag && tags.length < 10) {
+                    if (!tags.includes(tag.toLowerCase())) {
+                        tags.push(tag.toLowerCase());
+                        renderTags();
+                    }
+                    tagInput.value = '';
+                }
+            }
+        });
+
+        // File upload
+        const fileUploadArea = document.getElementById('file-upload-area');
+        const fileInput = document.getElementById('file-input');
+
+        fileUploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+
+            if (e.dataTransfer.files.length) {
+                await handleFiles(e.dataTransfer.files);
+            }
+        });
+
+        fileInput.addEventListener('change', async (e) => {
+            if (e.target.files.length) {
+                await handleFiles(e.target.files);
+            }
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Form submission
+        document.getElementById('post-create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleSubmit();
+        });
+    }
+
+    async function handleFiles(files) {
+        const validFiles = [];
+        const errors = [];
+
+        for (const file of files) {
+            try {
+                postManager.validateFile(file);
+                validFiles.push(file);
+            } catch (error) {
+                errors.push(error.message);
+            }
+        }
+
+        if (errors.length > 0) {
+            errors.forEach(error => showNotification(error, 'error'));
+        }
+
+        if (validFiles.length > 0) {
+            if (selectedFiles.length + validFiles.length > postManager.maxFiles) {
+                showNotification(`Maximum ${postManager.maxFiles} files allowed`, 'error');
+                validFiles.length = postManager.maxFiles - selectedFiles.length;
+            }
+
+            // Add files to selectedFiles
+            selectedFiles.push(...validFiles);
+            await renderMediaPreviews();
+        }
+
+        document.getElementById('file-input').value = '';
+    }
+
+    async function renderMediaPreviews() {
+        const previewContainer = document.getElementById('media-preview');
+        previewContainer.innerHTML = '';
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const preview = await postManager.getFilePreview(file);
+
+            const mediaItem = document.createElement('div');
+            mediaItem.className = 'media-item';
+            mediaItem.dataset.index = i;
+
+            if (preview.url) {
+                if (file.type.startsWith('image/')) {
+                    mediaItem.innerHTML = `
+                        <img src="${preview.url}" alt="${preview.name}">
+                        <button class="media-remove" data-index="${i}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                } else if (file.type.startsWith('video/')) {
+                    mediaItem.innerHTML = `
+                        <video src="${preview.url}" controls></video>
+                        <button class="media-remove" data-index="${i}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                }
+            } else {
+                mediaItem.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background-color: #f8f9fa;">
+                        <i class="fas fa-file fa-2x" style="color: var(--gray-color);"></i>
+                        <div style="font-size: 0.8rem; margin-top: 10px; text-align: center; padding: 0 5px;">${preview.name}</div>
+                    </div>
+                    <button class="media-remove" data-index="${i}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            }
+
+            previewContainer.appendChild(mediaItem);
+        }
+
+        document.querySelectorAll('.media-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.dataset.index);
+                removeFile(index);
+            });
+        });
+    }
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        renderMediaPreviews();
+    }
+
+    function renderTags() {
+        const tagsContainer = document.getElementById('tags-container');
+        const tagInput = document.getElementById('tag-input');
+
+        tagsContainer.innerHTML = '';
+
+        tags.forEach((tag, index) => {
+            const tagElement = document.createElement('div');
+            tagElement.className = 'tag';
+            tagElement.innerHTML = `
+                ${tag}
+                <button class="tag-remove" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            tagsContainer.appendChild(tagElement);
+        });
+
+        // Add the input back
+        tagsContainer.appendChild(tagInput);
+
+        document.querySelectorAll('.tag-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(btn.dataset.index);
+                tags.splice(index, 1);
+                renderTags();
+            });
+        });
+    }
+
+    function validateForm() {
+        let isValid = true;
+
+        // Clear previous errors
+        document.querySelectorAll('.validation-error').forEach(el => {
+            el.textContent = '';
+        });
+
+        const title = document.getElementById('post-title').value.trim();
+        if (!title) {
+            document.getElementById('title-error').textContent = 'Title is required';
+            isValid = false;
+        } else if (title.length > 200) {
+            document.getElementById('title-error').textContent = 'Title must be less than 200 characters';
+            isValid = false;
+        }
+
+        const content = document.getElementById('post-content').value.trim();
+        if (!content) {
+            document.getElementById('content-error').textContent = 'Content is required';
+            isValid = false;
+        }
+
+        if (!selectedCategory) {
+            document.getElementById('category-error').textContent = 'Please select a category';
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    async function handleSubmit() {
+        // Validate form
+        if (!validateForm()) {
+            showNotification('Please fix the errors in the form', 'error');
+            return;
+        }
+
+        // Get form data
+        const postData = {
+            title: document.getElementById('post-title').value.trim(),
+            description: document.getElementById('post-description').value.trim(),
+            content: document.getElementById('post-content').value.trim(),
+            category: selectedCategory,
+            tags: [...tags]
+        };
+
+        // Add media information if files exist
+        if (selectedFiles.length > 0) {
+            postData.media = selectedFiles.map((file, index) => ({
+                caption: '',
+                position: index
+            }));
+        }
+
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const submitBtn = document.getElementById('submit-btn');
+
+        loadingOverlay.style.display = 'flex';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+        try {
+            console.log('Submitting post:', postData);
+            console.log('Files:', selectedFiles.length);
+
+            // Create post
+            const createdPost = await postManager.createPost(postData, selectedFiles);
+
+            console.log('Post created successfully:', createdPost);
+
+            showNotification('Post created successfully!', 'success');
+
+            // Redirect to the new post
+            setTimeout(() => {
+                window.location.href = `post-detail.html?id=${createdPost.id}`;
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error creating post:', error);
+
+            let errorMessage = error.message || 'Failed to create post';
+
+            // JSON errors
+            try {
+                const errorObj = JSON.parse(error.message);
+                if (errorObj.message) {
+                    errorMessage = errorObj.message;
+                }
+            } catch (e) {
+            }
+
+            showNotification(errorMessage, 'error');
+
+            loadingOverlay.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Create Post';
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' :
+            type === 'error' ? 'exclamation-circle' :
+                type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Position notification
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.padding = '15px 20px';
+        notification.style.borderRadius = 'var(--border-radius)';
+        notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        notification.style.zIndex = '10000';
+        notification.style.display = 'flex';
+        notification.style.alignItems = 'center';
+        notification.style.gap = '10px';
+        notification.style.maxWidth = '400px';
+
+        // Colors based on type
+        if (type === 'success') {
+            notification.style.backgroundColor = '#d4edda';
+            notification.style.color = '#155724';
+            notification.style.border = '1px solid #c3e6cb';
+        } else if (type === 'error') {
+            notification.style.backgroundColor = '#f8d7da';
+            notification.style.color = '#721c24';
+            notification.style.border = '1px solid #f5c6cb';
+        } else if (type === 'warning') {
+            notification.style.backgroundColor = '#fff3cd';
+            notification.style.color = '#856404';
+            notification.style.border = '1px solid #ffeaa7';
+        } else {
+            notification.style.backgroundColor = '#d1ecf1';
+            notification.style.color = '#0c5460';
+            notification.style.border = '1px solid #bee5eb';
+        }
+
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    }
+
+    function getAuthToken() {
+        return localStorage.getItem('token');
+    }
+</script>
+</body>
+</html>
