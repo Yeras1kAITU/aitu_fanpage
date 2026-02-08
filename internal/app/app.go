@@ -41,7 +41,7 @@ func New(cfg *config.Config) (*App, error) {
 
 	authService := service.NewAuthService(userRepo, cfg)
 	postService := service.NewPostService(postRepo, userRepo, commentRepo)
-	commentService := service.NewCommentService(commentRepo, userRepo)
+	commentService := service.NewCommentService(commentRepo, userRepo, postRepo)
 	fileService := service.NewFileService(cfg.Upload)
 	userService := service.NewUserService(userRepo)
 

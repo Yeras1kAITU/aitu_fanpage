@@ -28,7 +28,6 @@ func NewPostService(postRepo repository.PostRepository, userRepo repository.User
 		likeTracker: NewLikeTracker(),
 	}
 
-	// Start background cleanup
 	go service.backgroundCleanup()
 
 	return service
@@ -255,7 +254,6 @@ func (s *PostService) DeletePost(postID, userID primitive.ObjectID) error {
 	}
 
 	if err := s.commentRepo.DeleteByPostID(postID); err != nil {
-		return err
 	}
 
 	return s.postRepo.Delete(postID)

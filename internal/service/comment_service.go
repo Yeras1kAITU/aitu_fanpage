@@ -12,12 +12,14 @@ import (
 type CommentService struct {
 	commentRepo repository.CommentRepository
 	userRepo    repository.UserRepository
+	postRepo    repository.PostRepository
 }
 
-func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository) *CommentService {
+func NewCommentService(commentRepo repository.CommentRepository, userRepo repository.UserRepository, postRepo repository.PostRepository) *CommentService {
 	return &CommentService{
 		commentRepo: commentRepo,
 		userRepo:    userRepo,
+		postRepo:    postRepo,
 	}
 }
 
@@ -38,7 +40,15 @@ func (s *CommentService) CreateComment(postID, authorID primitive.ObjectID, cont
 	}
 
 	user.IncrementCommentCount()
-	s.userRepo.Update(user)
+	if err := s.userRepo.Update(user); err != nil {
+		return nil, err
+	}
+
+	if err := s.postRepo.IncrementCommentCount(postID); err != nil {
+		user.DecrementCommentCount()
+		s.userRepo.Update(user)
+		return nil, err
+	}
 
 	return comment, nil
 }
@@ -85,9 +95,20 @@ func (s *CommentService) DeleteComment(commentID, userID primitive.ObjectID) err
 		return errors.New("not authorized to delete this comment")
 	}
 
-	return s.commentRepo.Delete(commentID)
+	if err := s.commentRepo.Delete(commentID); err != nil {
+		return err
+	}
+
+	user.DecrementCommentCount()
+	s.userRepo.Update(user)
+
+	if err := s.postRepo.DecrementCommentCount(comment.PostID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *CommentService) GetCommentCount(postID primitive.ObjectID) (int64, error) {
-	return s.commentRepo.CountByPostID(postID)
+func (s *CommentService) DeleteCommentByPostID(postID primitive.ObjectID) error {
+	return s.commentRepo.DeleteByPostID(postID)
 }
