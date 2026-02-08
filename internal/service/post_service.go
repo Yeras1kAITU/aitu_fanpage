@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -14,14 +15,23 @@ type PostService struct {
 	postRepo    repository.PostRepository
 	userRepo    repository.UserRepository
 	commentRepo repository.CommentRepository
+	rateLimiter *RateLimiter
+	likeTracker *LikeTracker
 }
 
 func NewPostService(postRepo repository.PostRepository, userRepo repository.UserRepository, commentRepo repository.CommentRepository) *PostService {
-	return &PostService{
+	service := &PostService{
 		postRepo:    postRepo,
 		userRepo:    userRepo,
 		commentRepo: commentRepo,
+		rateLimiter: NewRateLimiter(),
+		likeTracker: NewLikeTracker(),
 	}
+
+	// Start background cleanup
+	go service.backgroundCleanup()
+
+	return service
 }
 
 func (s *PostService) CreatePost(req dto.CreatePostRequest, authorID primitive.ObjectID, uploadedFiles []*UploadedFile) (*models.Post, error) {
@@ -74,14 +84,12 @@ func (s *PostService) CreatePost(req dto.CreatePostRequest, authorID primitive.O
 		)
 	}
 
-	// Calculate initial popularity score
 	post.CalculatePopularityScore()
 
 	if err := s.postRepo.Create(post); err != nil {
 		return nil, err
 	}
 
-	// Update user's post count
 	user.IncrementPostCount()
 	s.userRepo.Update(user)
 
@@ -93,7 +101,6 @@ func (s *PostService) GetPosts(limit, offset int) ([]*models.Post, error) {
 }
 
 func (s *PostService) GetFeed(userID primitive.ObjectID, category string, limit, offset int) ([]*models.Post, error) {
-	// Get posts based on category or all posts
 	if category != "" {
 		return s.postRepo.FindByCategory(category, limit)
 	}
@@ -114,7 +121,6 @@ func (s *PostService) GetPostByID(postID primitive.ObjectID) (*models.Post, erro
 		return nil, err
 	}
 
-	// Increment view count
 	go s.postRepo.IncrementViewCount(postID)
 	post.IncrementViewCount()
 
@@ -146,30 +152,57 @@ func (s *PostService) GetCategoriesStats() (map[string]int, error) {
 }
 
 func (s *PostService) LikePost(postID, userID primitive.ObjectID) error {
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil {
-		return err
+	if !s.rateLimiter.CanLike(userID) {
+		return errors.New("rate limit exceeded: maximum 3 likes per 3 minutes")
 	}
 
-	if !user.IsActive {
-		return errors.New("user account is deactivated")
-	}
+	s.rateLimiter.RecordLike(userID)
 
-	// Check if user already liked this post (simplified - would need a likes collection)
-	// For now, we'll just increment the count
+	timestamp := time.Now()
+	s.likeTracker.AddLike(postID, userID, timestamp)
+
 	if err := s.postRepo.IncrementLikeCount(postID); err != nil {
-		return err
+		return errors.New("failed to update like count: " + err.Error())
 	}
-
-	user.IncrementLikeCount()
-	s.userRepo.Update(user)
 
 	return nil
 }
 
 func (s *PostService) UnlikePost(postID, userID primitive.ObjectID) error {
-	// Need likes collection to track who liked what
-	return errors.New("unlike not implemented - would require likes collection")
+	likeRecord := s.likeTracker.CanUnlike(postID, userID)
+	if likeRecord == nil {
+		return errors.New("cannot unlike: no active likes on this post within the last 3 minutes")
+	}
+
+	if !s.likeTracker.Unlike(likeRecord.ID) {
+		return errors.New("unlike failed")
+	}
+
+	if err := s.postRepo.DecrementLikeCount(postID); err != nil {
+		return errors.New("failed to update database: " + err.Error())
+	}
+
+	return nil
+}
+
+func (s *PostService) GetPostLikeCount(postID primitive.ObjectID) (int, error) {
+	memoryCount := s.likeTracker.GetPostLikeCount(postID)
+
+	return memoryCount, nil
+}
+
+func (s *PostService) GetUserLikeStats(userID primitive.ObjectID) (int, time.Time, error) {
+	return 0, time.Time{}, nil
+}
+
+func (s *PostService) backgroundCleanup() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		s.rateLimiter.Cleanup()
+		s.likeTracker.Cleanup()
+	}
 }
 
 func (s *PostService) UpdatePost(postID, userID primitive.ObjectID, req dto.UpdatePostRequest) (*models.Post, error) {
@@ -308,10 +341,6 @@ func (s *PostService) UnfeaturePost(postID, userID primitive.ObjectID) error {
 
 	post.Unfeature()
 	return s.postRepo.Update(post)
-}
-
-func (s *PostService) GetPostLikes(postID primitive.ObjectID) ([]string, error) {
-	return []string{}, nil
 }
 
 func (s *PostService) GetUserByID(userID primitive.ObjectID) (*models.User, error) {

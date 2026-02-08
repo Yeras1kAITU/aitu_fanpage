@@ -69,27 +69,38 @@ func (r *PostRepository) FindAll(limit, offset int) ([]*models.Post, error) {
 	return posts, nil
 }
 
-func (r *PostRepository) IncrementLikeCount(id primitive.ObjectID) error {
+func (r *PostRepository) IncrementLikeCount(postID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := r.collection.UpdateOne(
-		ctx,
-		bson.M{"_id": id},
-		bson.M{"$inc": bson.M{"like_count": 1}},
-	)
+	filter := bson.M{"_id": postID}
+	update := bson.M{
+		"$inc": bson.M{"like_count": 1},
+		"$set": bson.M{"updated_at": time.Now()},
+	}
+
+	_, err := r.collection.UpdateOne(ctx, filter, update)
 	return err
 }
 
-func (r *PostRepository) DecrementLikeCount(id primitive.ObjectID) error {
+func (r *PostRepository) DecrementLikeCount(postID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := r.collection.UpdateOne(
-		ctx,
-		bson.M{"_id": id},
-		bson.M{"$inc": bson.M{"like_count": -1}},
-	)
+	filter := bson.M{"_id": postID}
+	update := bson.M{
+		"$inc": bson.M{"like_count": -1},
+		"$set": bson.M{"updated_at": time.Now()},
+	}
+
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+
+	if err == nil {
+		fixFilter := bson.M{"_id": postID, "like_count": bson.M{"$lt": 0}}
+		fixUpdate := bson.M{"$set": bson.M{"like_count": 0}}
+		r.collection.UpdateOne(ctx, fixFilter, fixUpdate)
+	}
+
 	return err
 }
 
@@ -306,9 +317,6 @@ func (r *PostRepository) Search(query string, limit int) ([]*models.Post, error)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Create text index in MongoDB for better search
-	// db.posts.createIndex({title: "text", content: "text", description: "text", tags: "text"})
-
 	filter := bson.M{
 		"$text":       bson.M{"$search": query},
 		"is_archived": false,
@@ -323,7 +331,6 @@ func (r *PostRepository) Search(query string, limit int) ([]*models.Post, error)
 
 	cursor, err := r.collection.Find(ctx, filter, findOptions)
 	if err != nil {
-		// Fallback to simple search if text index is not available
 		return r.simpleSearch(query, limit)
 	}
 	defer cursor.Close(ctx)
