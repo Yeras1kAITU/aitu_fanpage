@@ -337,6 +337,10 @@ func (s *PostService) UnfeaturePost(postID, userID primitive.ObjectID) error {
 	return s.postRepo.Update(post)
 }
 
+func (s *PostService) GetPostLikes(postID primitive.ObjectID) ([]string, error) {
+	return []string{}, nil
+}
+
 func (s *PostService) GetPostLikeCount(postID primitive.ObjectID) (int, error) {
 	count := s.likeTracker.GetPostLikeCount(postID)
 	return count, nil
