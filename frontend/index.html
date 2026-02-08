@@ -438,7 +438,7 @@
 
             // Total users - only for admin users
             const user = authManager.getUser();
-            if (user && user.role === 'admin') {
+            if (user || user.role === 'admin') {
                 try {
                     const usersRes = await fetchWithAuth('/api/admin/users?limit=1');
                     document.getElementById('create-post-btn').style.display = '';
