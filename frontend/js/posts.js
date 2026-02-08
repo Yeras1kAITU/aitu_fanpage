@@ -128,15 +128,22 @@ class PostManager {
                 method: 'POST'
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to like post');
+                throw new Error(data.error || `Failed to like post: ${response.status}`);
             }
 
             showNotification('Post liked!', 'success');
             return true;
         } catch (error) {
             console.error('Like post error:', error);
+
+            if (error.message.includes('rate limit exceeded')) {
+                showNotification(error.message, 'warning');
+            } else {
+                showNotification(error.message || 'Failed to like post', 'error');
+            }
             throw error;
         }
     }
@@ -147,15 +154,17 @@ class PostManager {
                 method: 'DELETE'
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to unlike post');
+                throw new Error(data.error || `Failed to unlike post: ${response.status}`);
             }
 
             showNotification('Post unliked', 'info');
             return true;
         } catch (error) {
             console.error('Unlike post error:', error);
+            showNotification(error.message || 'Failed to unlike post', 'error');
             throw error;
         }
     }
@@ -462,7 +471,7 @@ function initPostEventListeners() {
                     likeCount.textContent = currentCount + 1;
                 }
             } catch (error) {
-                showNotification(error.message || 'Failed to update like', 'error');
+                console.error('Like/unlike error:', error);
             }
         }
 

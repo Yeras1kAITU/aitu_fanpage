@@ -242,69 +242,99 @@ func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 func (h *PostHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Unauthorized",
+		})
 		return
 	}
 
 	postIDStr := chi.URLParam(r, "id")
 	postID, err := primitive.ObjectIDFromHex(postIDStr)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid post ID",
+		})
 		return
 	}
 
 	err = h.service.LikePost(postID, userID)
 	if err != nil {
-		if strings.Contains(err.Error(), "already liked") {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return
+		status := http.StatusInternalServerError
+		errorMsg := err.Error()
+
+		if strings.Contains(err.Error(), "rate limit exceeded") {
+			status = http.StatusTooManyRequests
+		} else if strings.Contains(err.Error(), "already liked") {
+			status = http.StatusConflict
 		}
-		http.Error(w, "Failed to like post: "+err.Error(), http.StatusInternalServerError)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": errorMsg,
+		})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Post liked successfully",
 		"post_id": postIDStr,
-	}); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+		"success": true,
+	})
 }
 
 func (h *PostHandler) UnlikePost(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Unauthorized",
+		})
 		return
 	}
 
 	postIDStr := chi.URLParam(r, "id")
 	postID, err := primitive.ObjectIDFromHex(postIDStr)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Invalid post ID",
+		})
 		return
 	}
 
 	err = h.service.UnlikePost(postID, userID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not liked") {
-			http.Error(w, err.Error(), http.StatusConflict)
-			return
+		status := http.StatusInternalServerError
+		errorMsg := err.Error()
+
+		if strings.Contains(err.Error(), "cannot unlike") {
+			status = http.StatusBadRequest // 400
 		}
-		http.Error(w, "Failed to unlike post: "+err.Error(), http.StatusInternalServerError)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": errorMsg,
+		})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Post unliked successfully",
 		"post_id": postIDStr,
-	}); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+		"success": true,
+	})
 }
 
 func (h *PostHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
