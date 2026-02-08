@@ -145,7 +145,6 @@ func (s *UserService) GetUserStats(userID primitive.ObjectID) (map[string]interf
 }
 
 func (s *UserService) SearchUsers(query string, limit int) ([]*models.User, error) {
-	// Will be changed to MongoDB
 	allUsers, err := s.userRepo.FindAll(1000, 0)
 	if err != nil {
 		return nil, err
