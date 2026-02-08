@@ -109,6 +109,10 @@ func (s *CommentService) DeleteComment(commentID, userID primitive.ObjectID) err
 	return nil
 }
 
+func (s *CommentService) GetCommentCount(postID primitive.ObjectID) (int64, error) {
+	return s.commentRepo.CountByPostID(postID)
+}
+
 func (s *CommentService) DeleteCommentByPostID(postID primitive.ObjectID) error {
 	return s.commentRepo.DeleteByPostID(postID)
 }
