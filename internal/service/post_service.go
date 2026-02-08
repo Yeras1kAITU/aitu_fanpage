@@ -185,12 +185,6 @@ func (s *PostService) UnlikePost(postID, userID primitive.ObjectID) error {
 	return nil
 }
 
-func (s *PostService) GetPostLikeCount(postID primitive.ObjectID) (int, error) {
-	memoryCount := s.likeTracker.GetPostLikeCount(postID)
-
-	return memoryCount, nil
-}
-
 func (s *PostService) GetUserLikeStats(userID primitive.ObjectID) (int, time.Time, error) {
 	return 0, time.Time{}, nil
 }
@@ -341,6 +335,15 @@ func (s *PostService) UnfeaturePost(postID, userID primitive.ObjectID) error {
 
 	post.Unfeature()
 	return s.postRepo.Update(post)
+}
+
+func (s *PostService) GetPostLikeCount(postID primitive.ObjectID) (int, error) {
+	count := s.likeTracker.GetPostLikeCount(postID)
+	return count, nil
+}
+
+func (s *PostService) HasUserLiked(postID, userID primitive.ObjectID) bool {
+	return false
 }
 
 func (s *PostService) GetUserByID(userID primitive.ObjectID) (*models.User, error) {
