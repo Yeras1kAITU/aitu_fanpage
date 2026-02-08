@@ -138,6 +138,10 @@
 <script src="js/auth.js"></script>
 <script src="js/posts.js"></script>
 <script>
+    const user = authManager.getUser();
+    if (user) {
+        document.getElementById('create-post-btn').style.display = '';
+    }
     let currentPage = 1;
     const postsPerPage = 10;
     let currentFilter = 'all';
