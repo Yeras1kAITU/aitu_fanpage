@@ -25,6 +25,7 @@ type PostRepository interface {
 	Search(query string, limit int) ([]*models.Post, error)
 	IncrementViewCount(id primitive.ObjectID) error
 	GetCategoriesStats() (map[string]int, error)
+	GetCategoriesStatsAggregated() (map[string]CategoryStats, error)
 }
 
 type UserRepository interface {
@@ -44,4 +45,12 @@ type CommentRepository interface {
 	Delete(id primitive.ObjectID) error
 	DeleteByPostID(postID primitive.ObjectID) error
 	CountByPostID(postID primitive.ObjectID) (int64, error)
+}
+
+type CategoryStats struct {
+	Count         int     `json:"count"`
+	TotalLikes    int     `json:"total_likes"`
+	AvgLikes      float64 `json:"avg_likes"`
+	TotalComments int     `json:"total_comments"`
+	AvgComments   float64 `json:"avg_comments"`
 }

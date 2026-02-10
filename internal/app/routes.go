@@ -105,6 +105,10 @@ func (a *App) setupRouter(authMid *middleware.AuthMiddleware) {
 				})
 			})
 		})
+
+		r.Get("/analytics/categories", a.handlers.Post.GetCategoriesStatsAggregated)
+
+		r.Get("/posts/categories/stats", a.handlers.Post.GetCategoriesStats)
 	})
 
 	r.Get("/uploads/*", a.handlers.Media.ServeMedia)

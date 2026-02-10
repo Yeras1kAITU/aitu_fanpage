@@ -150,6 +150,10 @@ func (s *PostService) GetCategoriesStats() (map[string]int, error) {
 	return s.postRepo.GetCategoriesStats()
 }
 
+func (s *PostService) GetCategoriesStatsAggregated() (map[string]repository.CategoryStats, error) {
+	return s.postRepo.GetCategoriesStatsAggregated()
+}
+
 func (s *PostService) LikePost(postID, userID primitive.ObjectID) error {
 	if !s.rateLimiter.CanLike(userID) {
 		return errors.New("rate limit exceeded: maximum 3 likes per 3 minutes")

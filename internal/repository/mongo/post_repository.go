@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/Yeras1kAITU/aitu_fanpage/internal/repository"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -465,6 +466,58 @@ func (r *PostRepository) GetCategoriesStats() (map[string]int, error) {
 			continue
 		}
 		stats[result.Category] = result.Count
+	}
+
+	return stats, nil
+}
+
+func (r *PostRepository) GetCategoriesStatsAggregated() (map[string]repository.CategoryStats, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{
+			"$group": bson.M{
+				"_id":            "$category",
+				"count":          bson.M{"$sum": 1},
+				"total_likes":    bson.M{"$sum": "$like_count"},
+				"avg_likes":      bson.M{"$avg": "$like_count"},
+				"total_comments": bson.M{"$sum": "$comment_count"},
+				"avg_comments":   bson.M{"$avg": "$comment_count"},
+			},
+		},
+		{
+			"$sort": bson.M{"count": -1},
+		},
+	}
+
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	stats := make(map[string]repository.CategoryStats)
+	for cursor.Next(ctx) {
+		var result struct {
+			ID            string  `bson:"_id"`
+			Count         int     `bson:"count"`
+			TotalLikes    int     `bson:"total_likes"`
+			AvgLikes      float64 `bson:"avg_likes"`
+			TotalComments int     `bson:"total_comments"`
+			AvgComments   float64 `bson:"avg_comments"`
+		}
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+
+		stats[result.ID] = repository.CategoryStats{
+			Count:         result.Count,
+			TotalLikes:    result.TotalLikes,
+			AvgLikes:      result.AvgLikes,
+			TotalComments: result.TotalComments,
+			AvgComments:   result.AvgComments,
+		}
 	}
 
 	return stats, nil

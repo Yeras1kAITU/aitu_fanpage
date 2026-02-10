@@ -22,12 +22,13 @@ type PostHandler struct {
 }
 
 type HandlerContainer struct {
-	Auth    *AuthHandler
-	Post    *PostHandler
-	Comment *CommentHandler
-	User    *UserHandler
-	Admin   *AdminHandler
-	Media   *MediaHandler
+	Auth      *AuthHandler
+	Post      *PostHandler
+	Comment   *CommentHandler
+	User      *UserHandler
+	Admin     *AdminHandler
+	Media     *MediaHandler
+	Analytics *AnalyticsHandler
 }
 
 func NewPostHandler(service *service.PostService, fileService *service.FileService) *PostHandler {
@@ -595,6 +596,80 @@ func (h *PostHandler) GetCategoriesStats(w http.ResponseWriter, r *http.Request)
 	response := dto.CategoriesStatsResponse{
 		Categories: stats,
 		TotalPosts: total,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+func (h *PostHandler) GetCategoriesStatsAggregated(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.service.GetCategoriesStatsAggregated()
+	if err != nil {
+		http.Error(w, "Failed to get category stats: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	totalPosts := 0
+	totalLikes := 0
+
+	for _, stat := range stats {
+		totalPosts += stat.Count
+		totalLikes += stat.TotalLikes
+	}
+
+	response := struct {
+		Categories map[string]struct {
+			Count         int     `json:"count"`
+			TotalLikes    int     `json:"total_likes"`
+			AvgLikes      float64 `json:"avg_likes"`
+			TotalComments int     `json:"total_comments"`
+			AvgComments   float64 `json:"avg_comments"`
+			Percentage    float64 `json:"percentage"`
+		} `json:"categories"`
+		TotalPosts int     `json:"total_posts"`
+		TotalLikes int     `json:"total_likes"`
+		AvgLikes   float64 `json:"avg_likes_per_post"`
+	}{
+		Categories: make(map[string]struct {
+			Count         int     `json:"count"`
+			TotalLikes    int     `json:"total_likes"`
+			AvgLikes      float64 `json:"avg_likes"`
+			TotalComments int     `json:"total_comments"`
+			AvgComments   float64 `json:"avg_comments"`
+			Percentage    float64 `json:"percentage"`
+		}),
+		TotalPosts: totalPosts,
+		TotalLikes: totalLikes,
+		AvgLikes:   0,
+	}
+
+	if totalPosts > 0 {
+		response.AvgLikes = float64(totalLikes) / float64(totalPosts)
+	}
+
+	for category, stat := range stats {
+		percentage := 0.0
+		if totalPosts > 0 {
+			percentage = (float64(stat.Count) / float64(totalPosts)) * 100
+		}
+
+		response.Categories[category] = struct {
+			Count         int     `json:"count"`
+			TotalLikes    int     `json:"total_likes"`
+			AvgLikes      float64 `json:"avg_likes"`
+			TotalComments int     `json:"total_comments"`
+			AvgComments   float64 `json:"avg_comments"`
+			Percentage    float64 `json:"percentage"`
+		}{
+			Count:         stat.Count,
+			TotalLikes:    stat.TotalLikes,
+			AvgLikes:      stat.AvgLikes,
+			TotalComments: stat.TotalComments,
+			AvgComments:   stat.AvgComments,
+			Percentage:    percentage,
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
