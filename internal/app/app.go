@@ -51,17 +51,19 @@ func New(cfg *config.Config) (*App, error) {
 	userHandler := handlers.NewUserHandler(userService)
 	adminHandler := handlers.NewAdminHandler(postService, userService, commentService)
 	mediaHandler := handlers.NewMediaHandler(fileService, postService)
+	analyticsHandler := handlers.NewAnalyticsHandler(postService)
 
 	app := &App{
 		cfg: cfg,
 		db:  db,
 		handlers: &handlers.HandlerContainer{
-			Auth:    authHandler,
-			Post:    postHandler,
-			Comment: commentHandler,
-			User:    userHandler,
-			Admin:   adminHandler,
-			Media:   mediaHandler,
+			Auth:      authHandler,
+			Post:      postHandler,
+			Comment:   commentHandler,
+			User:      userHandler,
+			Admin:     adminHandler,
+			Media:     mediaHandler,
+			Analytics: analyticsHandler,
 		},
 	}
 
