@@ -73,7 +73,6 @@ func (lt *LikeTracker) Unlike(likeID primitive.ObjectID) bool {
 	lt.mu.Lock()
 	defer lt.mu.Unlock()
 
-	// Find the like by ID
 	for userID, records := range lt.likes {
 		for i := range records {
 			if records[i].ID == likeID && records[i].Active {
@@ -102,6 +101,40 @@ func (lt *LikeTracker) GetPostLikeCount(postID primitive.ObjectID) int {
 	}
 
 	return count
+}
+
+// GetLikedUsers returns user IDs who liked a post
+func (lt *LikeTracker) GetLikedUsers(postID primitive.ObjectID) []string {
+	lt.mu.RLock()
+	defer lt.mu.RUnlock()
+
+	var userIDs []string
+	seen := make(map[primitive.ObjectID]bool)
+
+	for _, records := range lt.likes {
+		for _, record := range records {
+			if record.PostID == postID && record.Active && !seen[record.UserID] {
+				userIDs = append(userIDs, record.UserID.Hex())
+				seen[record.UserID] = true
+			}
+		}
+	}
+
+	return userIDs
+}
+
+// HasUserLikedPost checks if user currently has active like on post
+func (lt *LikeTracker) HasUserLikedPost(postID, userID primitive.ObjectID) bool {
+	lt.mu.RLock()
+	defer lt.mu.RUnlock()
+
+	for _, record := range lt.likes[userID] {
+		if record.PostID == postID && record.Active {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Cleanup removes records older than 3 minutes

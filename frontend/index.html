@@ -113,8 +113,8 @@
 <footer class="footer">
     <div class="footer-content">
         <div class="footer-section">
-            <h4>AITU Fanpage</h4>
-            <p>Official community platform for Astana IT University students and alumni.</p>
+            <h4>IT Fanpage</h4>
+            <p>Unofficial community platform for IT students and alumni.</p>
         </div>
         <div class="footer-section">
             <h4>Quick Links</h4>
@@ -125,12 +125,12 @@
         </div>
         <div class="footer-section">
             <h4>Contact</h4>
-            <p>Email: community@aitu.edu</p>
-            <p>Phone: +7 (7172) 123-456</p>
+            <p>Email: yerasylhello@gmail.com & 242613@astanait.edu.kz</p>
+            <p>Phone: +7(777)801-5715</p>
         </div>
     </div>
     <div class="footer-bottom">
-        <p>&copy; 2024 AITU Fanpage. All rights reserved.</p>
+        <p>&copy; 2026 AITU Fanpage. All rights reserved.</p>
     </div>
 </footer>
 
@@ -138,6 +138,10 @@
 <script src="js/auth.js"></script>
 <script src="js/posts.js"></script>
 <script>
+    const user = authManager.getUser();
+    if (user) {
+        document.getElementById('create-post-btn').style.display = '';
+    }
     let currentPage = 1;
     const postsPerPage = 10;
     let currentFilter = 'all';
@@ -438,7 +442,7 @@
 
             // Total users - only for admin users
             const user = authManager.getUser();
-            if (user && user.role === 'admin') {
+            if (user || user.role === 'admin') {
                 try {
                     const usersRes = await fetchWithAuth('/api/admin/users?limit=1');
                     document.getElementById('create-post-btn').style.display = '';

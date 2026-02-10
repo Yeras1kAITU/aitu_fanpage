@@ -12,6 +12,8 @@ type PostRepository interface {
 	FindAll(limit, offset int) ([]*models.Post, error)
 	IncrementLikeCount(id primitive.ObjectID) error
 	DecrementLikeCount(postID primitive.ObjectID) error
+	IncrementCommentCount(id primitive.ObjectID) error
+	DecrementCommentCount(id primitive.ObjectID) error
 	FindByCategory(category string, limit int) ([]*models.Post, error)
 	Update(post *models.Post) error
 	Delete(id primitive.ObjectID) error

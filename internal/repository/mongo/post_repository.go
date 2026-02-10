@@ -104,6 +104,41 @@ func (r *PostRepository) DecrementLikeCount(postID primitive.ObjectID) error {
 	return err
 }
 
+func (r *PostRepository) IncrementCommentCount(postID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": postID}
+	update := bson.M{
+		"$inc": bson.M{"comment_count": 1},
+		"$set": bson.M{"updated_at": time.Now()},
+	}
+
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *PostRepository) DecrementCommentCount(postID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": postID}
+	update := bson.M{
+		"$inc": bson.M{"comment_count": -1},
+		"$set": bson.M{"updated_at": time.Now()},
+	}
+
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+
+	if err == nil {
+		fixFilter := bson.M{"_id": postID, "comment_count": bson.M{"$lt": 0}}
+		fixUpdate := bson.M{"$set": bson.M{"comment_count": 0}}
+		r.collection.UpdateOne(ctx, fixFilter, fixUpdate)
+	}
+
+	return err
+}
+
 func (r *PostRepository) FindByCategory(category string, limit int) ([]*models.Post, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

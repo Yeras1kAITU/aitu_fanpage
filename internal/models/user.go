@@ -140,3 +140,10 @@ func (u *User) IncrementCommentCount() {
 	u.CommentCount++
 	u.UpdatedAt = time.Now()
 }
+
+func (u *User) DecrementCommentCount() {
+	u.CommentCount--
+	if u.CommentCount < 0 {
+		u.CommentCount = 0
+	}
+}

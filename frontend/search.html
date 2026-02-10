@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - AITU Fanpage</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .search-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .search-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 40px 0;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .search-box-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-btn {
+            padding: 0 30px;
+            border-radius: 50px;
+            font-weight: bold;
+        }
+
+        .search-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .search-results {
+            margin-top: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .results-count {
+            color: var(--gray-color);
+            font-size: 1rem;
+        }
+
+        .results-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--light-gray);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--gray-color);
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover,
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-results i {
+            font-size: 4rem;
+            color: var(--light-gray);
+            margin-bottom: 20px;
+        }
+
+        .search-suggestions {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .suggestions-title {
+            margin-bottom: 15px;
+            color: var(--dark-color);
+        }
+
+        .suggestions-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .suggestion-tag {
+            padding: 8px 15px;
+            background-color: white;
+            border: 1px solid var(--light-gray);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .suggestion-tag:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .recent-searches {
+            margin-top: 30px;
+        }
+
+        .recent-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background-color: white;
+            border: 1px solid var(--light-gray);
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .recent-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .clear-recent {
+            margin-left: auto;
+            font-size: 0.9rem;
+            color: var(--danger-color);
+            cursor: pointer;
+        }
+
+        .search-loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .search-loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .search-input-group {
+                flex-direction: column;
+            }
+
+            .search-btn {
+                width: 100%;
+                padding: 15px;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .results-tabs {
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <i class="fas fa-university"></i>
+            <span>AITU Fanpage</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <a href="search.html" class="nav-link active"><i class="fas fa-search"></i> Search</a>
+            <a href="post-create.html" class="nav-link"><i class="fas fa-plus"></i> Create Post</a>
+            <div id="auth-links"></div>
+        </div>
+    </div>
+</nav>
+
+<!-- Search Container -->
+<main class="search-container">
+    <!-- Search Header -->
+    <div class="search-header">
+        <h1><i class="fas fa-search"></i> Search Everything</h1>
+        <p>Find posts, users, and content across AITU Fanpage</p>
+
+        <div class="search-box-container">
+            <div class="search-input-group">
+                <input type="text" class="search-input" id="search-query"
+                       placeholder="Search for posts, users, or topics..."
+                       value="">
+                <button class="btn btn-primary search-btn" id="search-button">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+
+            <div class="search-filters">
+                <button class="filter-btn active" data-type="all">All</button>
+                <button class="filter-btn" data-type="posts">Posts</button>
+                <button class="filter-btn" data-type="users">Users</button>
+                <button class="filter-btn" data-type="comments">Comments</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="search-results" id="search-results">
+        <div class="results-header">
+            <h2 id="results-title">Search Results</h2>
+            <div class="results-count" id="results-count">0 results</div>
+        </div>
+
+        <div class="results-tabs">
+            <button class="tab-btn active" data-sort="relevance">Most Relevant</button>
+            <button class="tab-btn" data-sort="recent">Most Recent</button>
+            <button class="tab-btn" data-sort="popular">Most Popular</button>
+        </div>
+
+        <!-- Results will be loaded here -->
+        <div id="results-container">
+            <!-- Initial state - search prompt -->
+            <div class="no-results" id="initial-state">
+                <i class="fas fa-search"></i>
+                <h3>Start Searching</h3>
+                <p>Enter a search term above to find content</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Suggestions -->
+    <div class="search-suggestions" id="suggestions-container">
+        <h3 class="suggestions-title"><i class="fas fa-lightbulb"></i> Popular Searches</h3>
+        <div class="suggestions-list" id="suggestions-list">
+            <!-- Suggestions will be loaded dynamically -->
+        </div>
+    </div>
+
+    <!-- Recent Searches -->
+    <div class="recent-searches" id="recent-searches-container">
+        <h3><i class="fas fa-history"></i> Recent Searches</h3>
+        <div class="recent-list" id="recent-list">
+            <!-- Recent searches will be loaded dynamically -->
+        </div>
+        <div class="clear-recent" id="clear-recent">Clear All</div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>IT Fanpage</h4>
+            <p>Unofficial community platform for IT students and alumni.</p>
+        </div>
+        <div class="footer-section">
+            <h4>Quick Links</h4>
+            <a href="index.html">Home</a>
+            <a href="search.html">Search</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin Panel</a>
+        </div>
+        <div class="footer-section">
+            <h4>Contact</h4>
+            <p>Email: yerasylhello@gmail.com & 242613@astanait.edu.kz</p>
+            <p>Phone: +7(777)801-5715</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 AITU Fanpage. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/posts.js"></script>
+<script>
+    class SearchManager {
+        constructor() {
+            this.currentQuery = '';
+            this.currentType = 'all';
+            this.currentSort = 'relevance';
+            this.currentPage = 1;
+            this.resultsPerPage = 20;
+            this.totalResults = 0;
+            this.recentSearches = this.loadRecentSearches();
+            this.popularSearches = [
+                'memes', 'events', 'homework', 'exams',
+                'clubs', 'sports', 'graduation', 'internship',
+                'projects', 'study group', 'campus life', 'alumni'
+            ];
+        }
+
+        loadRecentSearches() {
+            const saved = localStorage.getItem('recent_searches');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        saveRecentSearches() {
+            localStorage.setItem('recent_searches', JSON.stringify(this.recentSearches));
+        }
+
+        addRecentSearch(query) {
+            if (!query.trim()) return;
+
+            this.recentSearches = this.recentSearches.filter(q => q !== query);
+
+            this.recentSearches.unshift(query);
+
+            if (this.recentSearches.length > 10) {
+                this.recentSearches = this.recentSearches.slice(0, 10);
+            }
+
+            this.saveRecentSearches();
+            this.renderRecentSearches();
+        }
+
+        clearRecentSearches() {
+            this.recentSearches = [];
+            this.saveRecentSearches();
+            this.renderRecentSearches();
+        }
+
+        async search(query, type = 'all', sort = 'relevance', page = 1) {
+            if (!query.trim()) {
+                this.showInitialState();
+                return;
+            }
+
+            this.currentQuery = query;
+            this.currentType = type;
+            this.currentSort = sort;
+            this.currentPage = page;
+
+            this.addRecentSearch(query);
+
+            this.showLoading();
+
+            try {
+                let results = [];
+
+                if (type === 'posts' || type === 'all') {
+                    const posts = await postManager.searchPosts(query, 50);
+                    results = results.concat(posts.map(post => ({
+                        type: 'post',
+                        data: post,
+                        relevance: this.calculateRelevance(post, query)
+                    })));
+                }
+
+                if (type === 'users' || type === 'all') {
+                    try {
+                        const users = await this.searchUsers(query);
+                        results = results.concat(users.map(user => ({
+                            type: 'user',
+                            data: user,
+                            relevance: this.calculateUserRelevance(user, query)
+                        })));
+                    } catch (error) {
+                        console.log('User search not available');
+                    }
+                }
+
+                results = this.sortResults(results, sort);
+
+                this.totalResults = results.length;
+                this.renderResults(results);
+                this.updateResultsCount();
+
+            } catch (error) {
+                console.error('Search error:', error);
+                this.showError('Failed to perform search. Please try again.');
+            }
+        }
+
+        async searchUsers(query) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return [];
+
+                const response = await fetch(`/api/admin/users/search?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    return await response.json();
+                }
+                return [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        calculateRelevance(post, query) {
+            let score = 0;
+            const queryLower = query.toLowerCase();
+
+            if (post.title && post.title.toLowerCase().includes(queryLower)) {
+                score += 10;
+            }
+
+            if (post.content && post.content.toLowerCase().includes(queryLower)) {
+                score += 5;
+            }
+
+            if (post.description && post.description.toLowerCase().includes(queryLower)) {
+                score += 3;
+            }
+
+            if (post.tags && post.tags.some(tag => tag.toLowerCase().includes(queryLower))) {
+                score += 7;
+            }
+
+            if (post.category && post.category.toLowerCase().includes(queryLower)) {
+                score += 8;
+            }
+
+            score += (post.like_count || 0) * 0.1;
+            score += (post.comment_count || 0) * 0.05;
+
+            return score;
+        }
+
+        calculateUserRelevance(user, query) {
+            let score = 0;
+            const queryLower = query.toLowerCase();
+
+            if (user.display_name && user.display_name.toLowerCase().includes(queryLower)) {
+                score += 10;
+            }
+
+            if (user.email && user.email.toLowerCase().includes(queryLower)) {
+                score += 8;
+            }
+
+            if (user.bio && user.bio.toLowerCase().includes(queryLower)) {
+                score += 5;
+            }
+
+            return score;
+        }
+
+        sortResults(results, sortType) {
+            return results.sort((a, b) => {
+                switch (sortType) {
+                    case 'recent':
+                        return new Date(b.data.created_at || 0) - new Date(a.data.created_at || 0);
+                    case 'popular':
+                        const aScore = (a.data.like_count || 0) + (a.data.comment_count || 0) * 0.5;
+                        const bScore = (b.data.like_count || 0) + (b.data.comment_count || 0) * 0.5;
+                        return bScore - aScore;
+                    case 'relevance':
+                    default:
+                        return b.relevance - a.relevance;
+                }
+            });
+        }
+
+        renderResults(results) {
+            const container = document.getElementById('results-container');
+
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        <h3>No results found</h3>
+                        <p>Try different keywords or check your spelling</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const start = (this.currentPage - 1) * this.resultsPerPage;
+            const end = start + this.resultsPerPage;
+            const paginatedResults = results.slice(start, end);
+
+            container.innerHTML = paginatedResults.map(result => {
+                if (result.type === 'post') {
+                    return this.renderPostResult(result.data);
+                } else if (result.type === 'user') {
+                    return this.renderUserResult(result.data);
+                }
+                return '';
+            }).join('');
+
+            if (results.length > this.resultsPerPage) {
+                this.renderPagination(results.length);
+            }
+        }
+
+        renderPostResult(post) {
+            return `
+                <div class="post-card search-result">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <img src="${post.author_profile_image || '/assets/default-avatar.png'}"
+                                 alt="${post.author_name}" class="author-avatar">
+                            <div class="author-info">
+                                <h4>${post.author_name}</h4>
+                                <span class="post-time">${formatTime(post.created_at)}</span>
+                            </div>
+                        </div>
+                        <span class="badge category">${post.category || 'general'}</span>
+                    </div>
+
+                    <div class="post-content">
+                        <h3 class="post-title">${post.title || 'Untitled Post'}</h3>
+                        ${post.description ? `<p class="post-description">${post.description}</p>` : ''}
+                        <div class="post-body">${this.highlightText(post.content || '', this.currentQuery, 150)}</div>
+                    </div>
+
+                    <div class="post-footer">
+                        <div class="post-stats">
+                            <span class="stat"><i class="fas fa-heart"></i> ${post.like_count || 0}</span>
+                            <span class="stat"><i class="fas fa-comment"></i> ${post.comment_count || 0}</span>
+                            <span class="stat"><i class="fas fa-eye"></i> ${post.view_count || 0}</span>
+                        </div>
+
+                        <div class="post-actions">
+                            <a href="post-detail.html?id=${post.id}" class="btn btn-outline btn-small">
+                                <i class="fas fa-external-link-alt"></i> View Post
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderUserResult(user) {
+            return `
+                <div class="user-card search-result">
+                    <div class="user-info">
+                        <img src="${user.profile_image || '/assets/default-avatar.png'}"
+                             alt="${user.display_name}" class="user-avatar-large">
+                        <div class="user-details">
+                            <h3>${user.display_name}</h3>
+                            <p class="user-email">${user.email || ''}</p>
+                            ${user.bio ? `<p class="user-bio">${user.bio}</p>` : ''}
+                            <div class="user-stats">
+                                <span class="stat"><i class="fas fa-newspaper"></i> ${user.post_count || 0} posts</span>
+                                <span class="stat"><i class="fas fa-heart"></i> ${user.like_count || 0} likes</span>
+                                <span class="stat"><i class="fas fa-comment"></i> ${user.comment_count || 0} comments</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="profile.html?id=${user.id}" class="btn btn-outline btn-small">
+                        <i class="fas fa-user"></i> View Profile
+                    </a>
+                </div>
+            `;
+        }
+
+        highlightText(text, query, maxLength = 200) {
+            if (!text || !query) return text || '';
+
+            const queryLower = query.toLowerCase();
+            const textLower = text.toLowerCase();
+            const index = textLower.indexOf(queryLower);
+
+            if (index === -1) {
+                return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+            }
+
+            const start = Math.max(0, index - 50);
+            const end = Math.min(text.length, index + query.length + 100);
+            let excerpt = text.substring(start, end);
+
+            if (start > 0) excerpt = '...' + excerpt;
+            if (end < text.length) excerpt = excerpt + '...';
+
+            const highlighted = excerpt.replace(
+                new RegExp(query, 'gi'),
+                match => `<mark>${match}</mark>`
+            );
+
+            return highlighted;
+        }
+
+        renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / this.resultsPerPage);
+            if (totalPages <= 1) return;
+
+            const container = document.getElementById('results-container');
+            const pagination = document.createElement('div');
+            pagination.className = 'pagination';
+            pagination.style.marginTop = '30px';
+
+            if (this.currentPage > 1) {
+                pagination.innerHTML += `
+                    <button class="page-btn" data-page="${this.currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                `;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= this.currentPage - 1 && i <= this.currentPage + 1)) {
+                    pagination.innerHTML += `
+                        <button class="page-btn ${i === this.currentPage ? 'active' : ''}" data-page="${i}">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === this.currentPage - 2 || i === this.currentPage + 2) {
+                    pagination.innerHTML += '<span class="page-dots">...</span>';
+                }
+            }
+
+            if (this.currentPage < totalPages) {
+                pagination.innerHTML += `
+                    <button class="page-btn" data-page="${this.currentPage + 1}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                `;
+            }
+
+            container.appendChild(pagination);
+
+            pagination.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const page = parseInt(btn.dataset.page);
+                    this.search(this.currentQuery, this.currentType, this.currentSort, page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+        }
+
+        showLoading() {
+            const container = document.getElementById('results-container');
+            container.innerHTML = `
+                <div class="search-loading">
+                    <div class="spinner"></div>
+                    <h3>Searching...</h3>
+                    <p>Finding results for "${this.currentQuery}"</p>
+                </div>
+            `;
+        }
+
+        showError(message) {
+            const container = document.getElementById('results-container');
+            container.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Search Error</h3>
+                    <p>${message}</p>
+                    <button class="btn btn-primary mt-2" id="retry-search">Retry</button>
+                </div>
+            `;
+
+            document.getElementById('retry-search')?.addEventListener('click', () => {
+                this.search(this.currentQuery, this.currentType, this.currentSort, this.currentPage);
+            });
+        }
+
+        showInitialState() {
+            const container = document.getElementById('results-container');
+            container.innerHTML = `
+                <div class="no-results" id="initial-state">
+                    <i class="fas fa-search"></i>
+                    <h3>Start Searching</h3>
+                    <p>Enter a search term above to find content</p>
+                </div>
+            `;
+            document.getElementById('results-count').textContent = '0 results';
+        }
+
+        updateResultsCount() {
+            const countElement = document.getElementById('results-count');
+            countElement.textContent = `${this.totalResults} result${this.totalResults !== 1 ? 's' : ''} found`;
+        }
+
+        renderSuggestions() {
+            const container = document.getElementById('suggestions-list');
+            container.innerHTML = this.popularSearches.map(term => `
+                <div class="suggestion-tag" data-term="${term}">
+                    ${term}
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.suggestion-tag').forEach(tag => {
+                tag.addEventListener('click', () => {
+                    const term = tag.dataset.term;
+                    document.getElementById('search-query').value = term;
+                    this.search(term, 'all', 'relevance', 1);
+                });
+            });
+        }
+
+        renderRecentSearches() {
+            const container = document.getElementById('recent-list');
+
+            if (this.recentSearches.length === 0) {
+                container.innerHTML = '<p class="text-muted">No recent searches</p>';
+                return;
+            }
+
+            container.innerHTML = this.recentSearches.map(term => `
+                <div class="recent-item" data-term="${term}">
+                    <i class="fas fa-history"></i>
+                    <span>${term}</span>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.recent-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const term = item.dataset.term;
+                    document.getElementById('search-query').value = term;
+                    this.search(term, 'all', 'relevance', 1);
+                });
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await checkAuthStatus();
+
+        const searchManager = new SearchManager();
+
+        searchManager.renderSuggestions();
+        searchManager.renderRecentSearches();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryParam = urlParams.get('q');
+        const typeParam = urlParams.get('type');
+        const categoryParam = urlParams.get('category');
+
+        if (queryParam) {
+            document.getElementById('search-query').value = queryParam;
+            searchManager.search(queryParam, typeParam || 'all', 'relevance', 1);
+        } else if (categoryParam) {
+            document.getElementById('search-query').value = categoryParam;
+            searchManager.search(categoryParam, 'posts', 'relevance', 1);
+        }
+
+        document.getElementById('search-button').addEventListener('click', () => {
+            const query = document.getElementById('search-query').value.trim();
+            searchManager.search(query, searchManager.currentType, searchManager.currentSort, 1);
+        });
+
+        document.getElementById('search-query').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = document.getElementById('search-query').value.trim();
+                searchManager.search(query, searchManager.currentType, searchManager.currentSort, 1);
+            }
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const type = btn.dataset.type;
+                searchManager.currentType = type;
+
+                if (searchManager.currentQuery) {
+                    searchManager.search(searchManager.currentQuery, type, searchManager.currentSort, 1);
+                }
+            });
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const sort = tab.dataset.sort;
+                searchManager.currentSort = sort;
+
+                if (searchManager.currentQuery) {
+                    searchManager.search(searchManager.currentQuery, searchManager.currentType, sort, 1);
+                }
+            });
+        });
+
+        document.getElementById('clear-recent').addEventListener('click', () => {
+            searchManager.clearRecentSearches();
+        });
+    });
+</script>
+</body>
+</html>
