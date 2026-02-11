@@ -1,0 +1,13 @@
+# Railway/Production
+.env
+.env.local
+.env.production
+
+# Uploads directory (will be stored in Volume)
+/uploads
+/data
+/temp
+
+# Binaries
+bin/
+server
