@@ -1,0 +1,115 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: aitu_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secretpassword
+      MONGO_INITDB_DATABASE: aitu_fanpage
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - aitu_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aitu_backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      ENVIRONMENT: "production"
+      MONGODB_URI: "mongodb://admin:secretpassword@mongodb:27017/?authSource=admin"
+      DATABASE_NAME: "aitu_fanpage"
+      JWT_SECRET: "your-production-jwt-secret-change-this"
+      UPLOAD_DIR: "/data/uploads"
+      TEMP_DIR: "/data/temp"
+    volumes:
+      - uploads_data:/data/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - aitu_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aitu_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - aitu_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aitu_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - aitu_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aitu_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - aitu_network
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: aitu_node_exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+    ports:
+      - "9100:9100"
+    networks:
+      - aitu_network
+
+volumes:
+  mongodb_data:
+  uploads_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  aitu_network:
+    driver: bridge

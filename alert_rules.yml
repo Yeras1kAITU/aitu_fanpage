@@ -1,0 +1,38 @@
+groups:
+  - name: aitu_fanpage_alerts
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 80
+        for: 10s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+        for: 10s
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage"
+
+      - alert: BackendServiceDown
+        expr: up{job="backend"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(prometheus_http_requests_total{code=~"5.."}[1m])) 
+          / 
+          sum(rate(prometheus_http_requests_total[1m])) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
