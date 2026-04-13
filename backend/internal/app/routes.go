@@ -9,6 +9,7 @@ import (
 
 	"github.com/Yeras1kAITU/aitu_fanpage/internal/middleware"
 	"github.com/Yeras1kAITU/aitu_fanpage/internal/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func (a *App) setupRouter(authMid *middleware.AuthMiddleware) {
@@ -34,7 +35,13 @@ func (a *App) setupRouter(authMid *middleware.AuthMiddleware) {
 	r.Use(chimiddleware.CleanPath)
 	r.Use(chimiddleware.Heartbeat("/ping"))
 
-	r.Get("/health", a.healthCheck)
+	r.Get("/metrics", promhttp.Handler().ServeHTTP)
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
 
 	r.Route("/api", func(r chi.Router) {
 
